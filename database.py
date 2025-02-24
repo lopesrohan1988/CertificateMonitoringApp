@@ -87,14 +87,46 @@ def clear_certificates_table():
     finally:
         conn.close()
 
+
+def extract_common_name(subject):
+    """
+    Extracts the common name (CN) from a certificate subject.
+
+    Args:
+        subject: A tuple of tuples or a string representing the certificate subject.
+
+    Returns:
+        The common name (string) or None if not found.
+    """
+    common_name = None
+
+    if isinstance(subject, tuple):  # Handle tuple of tuples
+        for component in subject:
+            if isinstance(component, tuple):
+                for attribute, value in component:
+                    if attribute == 'commonName':
+                        common_name = value
+                        return common_name  # Return immediately once found
+            elif isinstance(component, str): # Handle CN as single string
+                common_name = component
+                return common_name
+
+    elif isinstance(subject, str):  # Handle CN as a single string
+        common_name = subject
+        return common_name
+
+    return None  # Return None if CN not found
+
 def add_certificate(org_id, cert_data):
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    print(cert_data)
+    
     try:
         cert_data['issuer'] = str(cert_data['issuer'])
-        cert_data['subject'] = str(cert_data['subject'])
+        cert_data['subject'] = extract_common_name(cert_data['subject'])
+        print(cert_data['subject'])
+        
         cursor.execute("""
             INSERT INTO certificates (
                 organization_id, certificate_pem, issuer, subject, 

@@ -14,6 +14,8 @@ st.title("Certificate Monitor")
 if 'refresh_counter' not in st.session_state:
     st.session_state.refresh_counter = 0
 
+
+
 if st.button("Refresh Organizations"):
     st.session_state.refresh_counter += 1  # Increment counter to trigger refresh
 
@@ -48,7 +50,8 @@ for org in organizations:
         for cert in certificates:
             expiry_date = datetime.datetime.strptime(cert['valid_to'], '%b %d %H:%M:%S %Y %Z')
             days_until_expiry = (expiry_date - datetime.datetime.now()).days
-            expiry_warning = f"Expires in {days_until_expiry} days!" if days_until_expiry < config.ALERT_THRESHOLD_DAYS else ""
+            expiry_warning = days_until_expiry
+
 
             row = {
                 "Organization": org['name'],  # Add organization name to the table
@@ -64,20 +67,24 @@ for org in organizations:
 
 if all_certificate_data:  # Check if any certificates were found at all
     df = pd.DataFrame(all_certificate_data)
-    st.dataframe(df)  # Display the *single* table
+    # Sort by 'Expiry Warning' in ascending order
+    df = df.sort_values('Expiry Warning')
+    # Apply styling
+    def color_expiry_warning(val):
+        try:
+            val = int(val)  # Try converting to integer
+        except ValueError:
+            return ''  # Handle the case where conversion fails        
 
-    # Download Buttons (after the table)
-    # for i, row in df.iterrows(): # Iterate through the rows of the DataFrame
-    #     if row['Certificate PEM']:
-    #         st.download_button(
-    #             label=f"Download Certificate {i+1} for {row['Organization']}",
-    #             data=row['Certificate PEM'],
-    #             file_name=f"{row['Organization']}_cert_{i+1}.pem",
-    #             mime="application/x-pem-file",
-    #             key=f"download_{i}" # Unique key
-    #         )
-    #     else:
-    #         st.write(f"Certificate {i+1} for {row['Organization']} not available for download.")
+        color = 'red' if val < config.ALERT_THRESHOLD_DAYS else 'green'
+        return f'color: {color}'
+    
+    styled_df = df.style.applymap(color_expiry_warning, subset=['Expiry Warning'])
+
+
+    
+    st.dataframe(styled_df)  # Display the *single* table
+
 else:
     st.write("No certificates found for any organization.")
 
