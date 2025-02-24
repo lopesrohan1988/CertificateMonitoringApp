@@ -125,8 +125,8 @@ def add_certificate(org_id, cert_data):
     try:
         cert_data['issuer'] = str(cert_data['issuer'])
         cert_data['subject'] = extract_common_name(cert_data['subject'])
-        print(cert_data['subject'])
-        
+        #print(cert_data['subject'])
+
         cursor.execute("""
             INSERT INTO certificates (
                 organization_id, certificate_pem, issuer, subject, 
@@ -150,6 +150,35 @@ def get_certificates_by_org_id(org_id):
     conn.close()
     return certificates
 
+def update_subscriber(subscriber_id, new_email):
+    """Updates a subscriber's email in the database.
+
+    Args:
+      subscriber_id: The ID of the subscriber to update.
+      new_email: The new email address for the subscriber.
+
+    Returns:
+      True if the update was successful, False otherwise.
+    """
+    try:
+        conn = get_db_connection()  # Assuming you have this function
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            UPDATE subscribers 
+            SET email =? 
+            WHERE id =?
+        """, (new_email, subscriber_id))
+
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error updating subscriber: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()
+
 def add_subscriber(email):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -162,10 +191,57 @@ def add_subscriber(email):
     finally:
         conn.close()
 
+
+def delete_subscriber(subscriber_id):
+    """Deletes a subscriber from the database.
+
+    Args:
+      subscriber_id: The ID of the subscriber to delete.
+
+    Returns:
+      True if the deletion was successful, False otherwise.
+    """
+    try:
+        conn = get_db_connection()  # Assuming you have this function
+        cursor = conn.cursor()
+
+        cursor.execute("DELETE FROM subscribers WHERE id =?", (subscriber_id,))
+
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error deleting subscriber: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()
+
 def get_all_subscribers():
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT email FROM subscribers")
+    cursor.execute("SELECT id,email FROM subscribers")
     subscribers = [row for row in cursor.fetchall()]  # Extract email addresses
     conn.close()
     return subscribers
+
+
+def update_organization(org_id, new_name, new_url):
+
+    try:
+        conn = get_db_connection()  # Replace with your database file
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            UPDATE organizations 
+            SET name =?, url =? 
+            WHERE id =?
+        """, (new_name, new_url, org_id))
+
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error updating organization: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()

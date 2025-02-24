@@ -85,7 +85,7 @@ def send_email_alert(org_name, url, cert_data, days_until_expiry):
 def check_certificates_and_alert():
     # Clear the certificates table before checking
     database.clear_certificates_table()
-    
+
     organizations = database.get_all_organizations()
     for org in organizations:
         cert_chain = check_certificate(org['url'])
@@ -94,7 +94,7 @@ def check_certificates_and_alert():
                 expiry_date = datetime.datetime.strptime(cert_data['valid_to'], '%b %d %H:%M:%S %Y %Z')
                 days_until_expiry = (expiry_date - datetime.datetime.now()).days
                 if days_until_expiry < config.ALERT_THRESHOLD_DAYS:
-                    send_email_alert(org.name, org.url, cert_data, days_until_expiry)
+                    send_email_alert(org['name'], org['url'], cert_data, days_until_expiry)
                 database.add_certificate(org["id"], cert_data) # Store in the database
 
 # Schedule the certificate check (e.g., daily):
