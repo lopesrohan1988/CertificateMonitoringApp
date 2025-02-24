@@ -1,0 +1,5 @@
+streamlit
+requests
+pyyaml         # For YAML configuration (optional)
+schedule      # For scheduling certificate checks
+pandas
