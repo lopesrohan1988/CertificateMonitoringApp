@@ -34,11 +34,13 @@ def check_certificate(url):
                     "is_intermediate": False,
                     "is_root": False
                 })
-
+                
                 # Get the chain of trust if available. This is not always available.
                 try:
                     chain = ssock.get_verified_chain()
+                    
                     for ca_cert in chain:
+                        #print(str(ca_cert['subject']))
                         cert_chain.append({
                             "certificate_pem": ssl.DER_cert_to_PEM_cert(ca_cert.to_cryptography().public_bytes(ssl.DER)),
                             "issuer": str(ca_cert['issuer']),
@@ -49,7 +51,7 @@ def check_certificate(url):
                             "is_intermediate": True,
                             "is_root": False
                         })
-
+                    
                 except AttributeError:
                     pass
 
