@@ -1,6 +1,10 @@
 # Application Certificate Expiration Monitoring
 
+
+
 This Streamlit application provides a user-friendly interface for monitoring the expiration dates of application certificates. It allows you to add application URLs, subscribe for email alerts, and view certificate details with expiry warnings.
+
+![Main Dashboard](images/home.png)
 
 ## Features
 
