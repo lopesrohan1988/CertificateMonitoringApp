@@ -42,10 +42,27 @@ pip install -r requirements.txt
 
 streamlit run your_app_name.py  # Replace your_app_name.py with the name of your main script
 
+## Running the Certificate Monitoring Scheduler
+
+The `scheduler.py` script is responsible for periodically checking SSL certificates and sending email alerts if any certificates are nearing expiration.
+
+
 CERTIFICATEMONITORINGAPP/
-├── requirements.txt
-├── your_app_name.py  # Your main Streamlit script
-├── database.py       # Database interaction logic
-├── scheduler.py      # Certificate checking and scheduling
-├── config.py         # Configuration settings
+├── app.py             # Main Streamlit script (orchestration)
+├── components/      
+│   ├── sidebar.py           
+│   ├── app_management.py    
+│   ├── subscriber_management.py
+│   └── mainpage.py
+├── services/         
+│   ├── database.py  
+│   ├── scheduler.py 
+├── setup/            
+│   ├── requirements.txt        
+│   └── run.bat
+├── config/            
+│   ├── config.py       
+├── testfiles/             
+│   ├── test.py
+├── cert_monitor.db    
 └── README.md

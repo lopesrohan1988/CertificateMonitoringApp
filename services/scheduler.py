@@ -1,10 +1,9 @@
-import requests
 import ssl
 import datetime
 import smtplib
 from email.mime.text import MIMEText
-import database
-import config
+import services.database as database
+import config.config as config
 import schedule
 import time
 
@@ -60,17 +59,31 @@ def check_certificate(url):
         print(f"Error checking certificate for {url}: {e}")
         return None
 
-def send_email_alert(org_name, url, cert_data, days_until_expiry):
+def send_email_alert(expiring_certs):
+    """
+    Sends a single email alert with details of all expiring certificates in a row format.
+
+    Args:
+        expiring_certs: A list of tuples, where each tuple contains:
+                        (organization_name, organization_url, expiry_date, days_until_expiry)
+    """
     subscribers = database.get_all_subscribers()
     if not subscribers:
         print("No subscribers found.")
         return
 
-    message = f"Certificate for {org_name} ({url}) expires in {days_until_expiry} days!\n\nDetails:\n{cert_data}"
-    msg = MIMEText(message)
-    msg['Subject'] = f"Certificate Expiry Alert: {org_name}"
-    msg['From'] = config.ALERT_EMAIL
+    # Create a formatted table with certificate details
+    message = "The following certificates are expiring soon:\n\n"
+    message += "| Organization | URL | Expiry Date | Days Until Expiry |\n"
+    message += "|---|---|---|---| \n"  # Separator row
 
+    for org_name, url, expiry_date, days_until_expiry in expiring_certs:
+        message += f"| {org_name} | {url} | {expiry_date} | {days_until_expiry} |\n"
+
+    msg = MIMEText(message)
+    msg['Subject'] = "Certificate Expiry Alert"
+    msg['From'] = config.ALERT_EMAIL
+    #print(msg)
     try:
         with smtplib.SMTP(config.SMTP_SERVER, config.SMTP_PORT) as server:
             server.starttls()
@@ -83,10 +96,12 @@ def send_email_alert(org_name, url, cert_data, days_until_expiry):
         print(f"Error sending email alert: {e}")
 
 def check_certificates_and_alert():
+    #print(config.ALERT_THRESHOLD_DAYS)
     # Clear the certificates table before checking
     database.clear_certificates_table()
-
     organizations = database.get_all_organizations()
+    expiring_certs =  []
+
     for org in organizations:
         cert_chain = check_certificate(org['url'])
         if cert_chain:
@@ -94,8 +109,12 @@ def check_certificates_and_alert():
                 expiry_date = datetime.datetime.strptime(cert_data['valid_to'], '%b %d %H:%M:%S %Y %Z')
                 days_until_expiry = (expiry_date - datetime.datetime.now()).days
                 if days_until_expiry < config.ALERT_THRESHOLD_DAYS:
-                    send_email_alert(org['name'], org['url'], cert_data, days_until_expiry)
+                    #send_email_alert(org['name'], org['url'], cert_data, days_until_expiry)
+                    expiring_certs.append((org['name'], org['url'], cert_data['valid_to'], days_until_expiry))
                 database.add_certificate(org["id"], cert_data) # Store in the database
+    # Send a single email with all expiring certificates
+    if expiring_certs:
+        send_email_alert(expiring_certs)
 
 # Schedule the certificate check (e.g., daily):
 schedule.every().day.do(check_certificates_and_alert)

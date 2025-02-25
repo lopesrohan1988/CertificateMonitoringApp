@@ -1,7 +1,8 @@
 import sqlite3
-import config  # Your config file
+import config.config as config  # Your config file
 
 def get_db_connection():
+    #print(config.DATABASE_FILE)
     conn = sqlite3.connect(config.DATABASE_FILE)  # Path to your SQLite database file
     conn.row_factory = sqlite3.Row # To access columns by name
     return conn
@@ -204,9 +205,13 @@ def delete_subscriber(subscriber_id):
     try:
         conn = get_db_connection()  # Assuming you have this function
         cursor = conn.cursor()
+        subscriber_id = int(subscriber_id)
+        #print(f"Deleting subscriber with ID: {subscriber_id}")
+        sql_query = "DELETE FROM subscribers WHERE id =?"  # Store the query
+        #print(f"SQL Query: {sql_query}")  # Print the query
 
-        cursor.execute("DELETE FROM subscribers WHERE id =?", (subscriber_id,))
-
+        #print(subscriber_id)
+        cursor.execute(sql_query, (subscriber_id,))
         conn.commit()
         return True
     except Exception as e:
