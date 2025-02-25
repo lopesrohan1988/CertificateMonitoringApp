@@ -14,16 +14,22 @@ def mainpage():
         certificates = database.get_certificates_by_org_id(org['id'])
         if certificates:
             for cert in certificates:
-                expiry_date = datetime.datetime.strptime(cert['valid_to'], '%b %d %H:%M:%S %Y %Z')
-                days_until_expiry = (expiry_date - datetime.datetime.now()).days
+                #expiry_date = datetime.datetime.strptime(cert['valid_to'], '%b %d %H:%M:%S %Y %Z')
+                expiry_date = datetime.datetime.strptime(cert['valid_to'], '%Y-%m-%d %H:%M:%S%z')
+                days_until_expiry = (expiry_date - datetime.datetime.now(datetime.timezone.utc)).days
                 expiry_warning = days_until_expiry
 
                 row = {
                     "Organization": org['name'],
                     "URL": org['url'],
-                    "Subject": cert['subject'],
+                    #"Subject": cert['subject'],
                     "Valid From": cert['valid_from'],
                     "Valid To": cert['valid_to'],
+                    #"is_leaf": cert['is_leaf'],
+                    #"is_intermediate": cert['is_intermediate'],
+                    #"is_root": cert['is_root'],
+                    #"Certificate Type": "Root" if cert['is_root'] else "Intermediate" if cert['is_intermediate'] else "Leaf",
+                    "Certificate Type": "Root/Intermediate" if cert['is_root'] or cert['is_intermediate'] else "Leaf",
                     "Expires in (days)": expiry_warning,
                    # "Certificate PEM": cert['certificate_pem']
                 }

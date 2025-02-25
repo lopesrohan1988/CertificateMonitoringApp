@@ -3,3 +3,5 @@ requests
 pyyaml         # For YAML configuration (optional)
 schedule      # For scheduling certificate checks
 pandas
+pyOpenSSL  # For the OpenSSL library
+cryptography

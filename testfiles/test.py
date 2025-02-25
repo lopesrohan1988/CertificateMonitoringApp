@@ -1,70 +1,58 @@
-import ssl
 import socket
+from OpenSSL import SSL
+from OpenSSL.crypto import dump_certificate, FILETYPE_PEM
+import ssl
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
 
-def get_certificate_chain(hostname, port=443):
-    context = ssl.create_default_context()
-    with socket.create_connection((hostname, port)) as sock:
-        with context.wrap_socket(sock, server_hostname=hostname) as ssock:
-            der_cert = ssock.getpeercert(binary_form=True)
-            cert = ssock.getpeercert()
+def get_certificate_chain(url):
+    hostname = url.split("//")[1]  # Extract hostname
+    port = 443  # Default HTTPS port
 
-            # Get the certificate chain
-            chain = []
-            chain.append({
-                "certificate_pem": ssl.DER_cert_to_PEM_cert(der_cert),
-                "issuer": cert['issuer'],
-                "subject": cert['subject'],
-                "valid_from": cert['notBefore'],
-                "valid_to": cert['notAfter'],
-                "is_leaf": True,  # Server cert is always the leaf
-                "is_intermediate": False,
-                "is_root": False
-            })
+    # Create a context
+    context = SSL.Context(SSL.TLSv1_2_METHOD)
 
-            # Get the intermediate certificates from the server
-            try:
-                intermediate_der_certs = ssock.getpeercertchain()
-                if intermediate_der_certs is not None:
-                    for intermediate_der_cert in intermediate_der_certs:
-                        intermediate_cert = ssl.PEM_cert_to_DER_cert(ssl.DER_cert_to_PEM_cert(intermediate_der_cert))
-                        chain.append({
-                            "certificate_pem": ssl.DER_cert_to_PEM_cert(intermediate_der_cert),
-                            "issuer": ssl.PEM_cert_to_DER_cert(ssl.DER_cert_to_PEM_cert(intermediate_der_cert)).issuer(),
-                            "subject": ssl.PEM_cert_to_DER_cert(ssl.DER_cert_to_PEM_cert(intermediate_der_cert)).subject(),
-                            "valid_from": ssl.PEM_cert_to_DER_cert(ssl.DER_cert_to_PEM_cert(intermediate_der_cert)).not_valid_before(),
-                            "valid_to": ssl.PEM_cert_to_DER_cert(ssl.DER_cert_to_PEM_cert(intermediate_der_cert)).not_valid_after(),
-                            "is_leaf": False,
-                            "is_intermediate": True,
-                            "is_root": False
-                        })
-                else:
-                    print(f"Warning: No intermediate certificates provided by {hostname}.")
-            except AttributeError:
-                print(f"Warning: Unable to retrieve intermediate certificates from {hostname}.")
+    # Disable verification
+    context.set_verify(ssl.CERT_NONE, None)
 
-            # Get the root certificate
-            try:
-                root_der_cert = ssl.get_server_certificate((hostname, port))
-                if root_der_cert is not None:
-                    root_cert = ssl.PEM_cert_to_DER_cert(root_der_cert)
-                    chain.append({
-                        "certificate_pem": root_der_cert,
-                        "issuer": root_cert.issuer(),
-                        "subject": root_cert.subject(),
-                        "valid_from": root_cert.not_valid_before(),
-                        "valid_to": root_cert.not_valid_after(),
-                        "is_leaf": False,
-                        "is_intermediate": False,
-                        "is_root": True
-                    })
-                else:
-                    print(f"Warning: No root certificate provided by {hostname}.")
-            except AttributeError:
-                print(f"Warning: Unable to retrieve root certificate from {hostname}.")
+    # Create a connection
+    sock = SSL.Connection(context, socket.create_connection((hostname, port)))
 
-    return chain
+    # Establish the connection
+    sock.set_connect_state()
+    sock.set_tlsext_host_name(hostname.encode())
+    sock.do_handshake()
 
-hostname = "www.example.com"
-cert_chain = get_certificate_chain(hostname)
+    # Get the certificate chain
+    cert_chain = sock.get_peer_cert_chain()
+
+    # Convert the certificates to PEM format
+    pem_chain = []
+    for cert in cert_chain:
+        pem_chain.append(dump_certificate(FILETYPE_PEM, cert).decode())
+
+    # Parse the certificates
+    parsed_chain = []
+    for i, pem_cert in enumerate(pem_chain):
+        cert_obj = x509.load_pem_x509_certificate(pem_cert.encode(), default_backend())
+        is_leaf = i == 0
+        is_root = i == len(pem_chain) - 1
+        is_intermediate = not is_leaf and not is_root
+        parsed_chain.append({
+            "certificate_pem": pem_cert,
+            "issuer": cert_obj.issuer,
+            "subject": cert_obj.subject,
+            "valid_from": cert_obj.not_valid_before_utc,
+            "valid_to": cert_obj.not_valid_after_utc,
+            "is_leaf": is_leaf,
+            "is_intermediate": is_intermediate,
+            "is_root": is_root
+        })
+
+    return parsed_chain
+
+url = "https://www.google.com"
+cert_chain = get_certificate_chain(url)
+
 for cert in cert_chain:
     print(cert)
