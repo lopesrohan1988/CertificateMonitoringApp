@@ -26,8 +26,11 @@ def get_certificate_chain(url):
     context.set_verify(ssl.CERT_NONE, None)
 
     # Create a connection
-    sock = SSL.Connection(context, socket.create_connection((hostname, port)))
-
+    try:
+        sock = SSL.Connection(context, socket.create_connection((hostname, port)))
+    except (socket.gaierror, ConnectionRefusedError, OSError) as e:  # Catch hostname/connection errors
+            print(f"Error connecting to {url}: {e}") # Print error for debugging. Remove in production
+            return None  # Return None to indicate failure
     # Establish the connection
     sock.set_connect_state()
     sock.set_tlsext_host_name(hostname.encode())
@@ -168,6 +171,9 @@ def check_certificates_and_alert():
                     #send_email_alert(org['name'], org['url'], cert_data, days_until_expiry)
                     expiring_certs.append((org['name'], org['url'], cert_data['valid_to'], days_until_expiry))
                 database.add_certificate(org["id"], cert_data) # Store in the database
+        else: # Handle the case where cert_chain is None (connection/URL error)
+            print(f"Could not retrieve certificate chain for {org['url']}") # Print error for debugging. Remove in production
+            continue # or pass, depending on your error handling needs
     # Send a single email with all expiring certificates
     if expiring_certs:
         send_email_alert(expiring_certs)

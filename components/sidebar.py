@@ -17,7 +17,7 @@ def sidebar():
             org_name = st.text_input("Application Name", placeholder="e.g., Example Inc.")
             org_url = st.text_input("Application URL", placeholder="e.g., https://example.com")
             if st.button("Add Application", use_container_width=True):
-                url_regex = r"^https://[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"  # Basic URL regex
+                url_regex = r"^https://[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(:[0-9]+)?$"
                 if not re.match(url_regex, org_url):
                     st.error("Invalid URL format. Please use a format like https://www.example.com")
                 else:
