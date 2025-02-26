@@ -19,6 +19,14 @@ def get_certificate_chain(url):
     hostname = url.split("//")[1]  # Extract hostname
     port = 443  # Default HTTPS port
 
+    # hostname = url.split("//")[1]  # Extract hostname
+    # port = 443  # Default HTTPS port
+    # if ":" in hostname:
+    #     hostname, port_str = hostname.split(":")
+    #     port = int(port_str)
+    # # Create a context
+    # print(port)
+
     # Create a context
     context = SSL.Context(SSL.TLSv1_2_METHOD)
 

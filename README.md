@@ -43,7 +43,7 @@ pip install -r requirements.txt
 
 #Running the Application
 
-streamlit run app.py  
+streamlit run app.py
 
 ## Running the Certificate Monitoring Scheduler
 

@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+#DatabaseFile
+cert_monitor.db
+
 # Distribution / packaging
 .Python
 build/
