@@ -23,7 +23,6 @@ This Streamlit application provides a user-friendly interface for monitoring the
 * Python 3.7+
 * Streamlit
 * requests
-* pyyaml (optional, for YAML configuration)
 * schedule
 * pandas
 
@@ -32,8 +31,8 @@ This Streamlit application provides a user-friendly interface for monitoring the
 1. Clone the repository:
 
 ```bash
-git clone [https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git](https://www.google.com/search?q=https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git)  # Replace with your repo URL
-cd YOUR_REPO_NAME
+git clone [https://github.com/lopesrohan1988/CertificateMonitoringApp.git]
+cd CertificateMonitoringApp
 
 #Create a virtual environment (recommended):
 python3 -m venv venv
@@ -44,7 +43,7 @@ pip install -r requirements.txt
 
 #Running the Application
 
-streamlit run your_app_name.py  # Replace your_app_name.py with the name of your main script
+streamlit run your_app.py  
 
 ## Running the Certificate Monitoring Scheduler
 
